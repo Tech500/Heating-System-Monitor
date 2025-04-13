@@ -5,7 +5,7 @@ An ESP-NOW-based solution to monitor heating system activity without direct inte
 
 ## Overview
 
-This project utilizes two ESP8266 microcontrollers communicating via ESP-NOW protocol to detect and log heating system activity. The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.
+This project utilizes two ESP32 microcontrollers communicating via ESP-NOW protocol to detect and log heating system activity. The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.
 
 ## Features
 
@@ -16,8 +16,8 @@ This project utilizes two ESP8266 microcontrollers communicating via ESP-NOW pro
 
 ## Components
 
-- **ESP-Now_Master.ino**: Firmware for the master ESP8266 device responsible for detecting heating activity and sending data.
-- **ESP-Now_Slave.ino**: Firmware for the slave ESP8266 device that receives data from the master and processes it.
+- **ESP-Now_Master.ino**: Firmware for the master ESP32 device responsible for detecting heating activity and sending data.
+- **ESP-Now_Slave.ino**: Firmware for the slave ESP32 device that receives data from the master and processes it.
 - **Google Script --Heating System Monitor.txt**: Google Apps Script to handle incoming data and log it to Google Sheets.
 - **Heating System Monitor GS.jpg**: Diagram illustrating the Google Sheets setup.
 - **Heating System Monitor.mp4**: Demonstration video showcasing the system in operation.
@@ -64,6 +64,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 For more information, visual demonstrations, and troubleshooting, please refer to the included `Heating System Monitor.mp4` video and `putty.log` file.
 
----
-
-Let me know if you'd like the README uploaded to your GitHub or formatted as a downloadable file.
