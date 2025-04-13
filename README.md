@@ -53,12 +53,13 @@ Project used 2- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presic
 ## Usage
 
 Once set up, the master device will detect heating system activity and send a signal to the slave device via ESP-NOW. The slave device will then send BME280data to the Master; which, will send 
-lastest updated project data in the form of key and value in the String "data" to Google Apps Script web app, which logs the event to the Monthly; perpetual, Google Sheet. You can monitor heating 
+lastest updated project data in the form of key and value --in the form of a String, named "data" to Google Apps Script web app, which logs the event to the Monthly; perpetual, Google Sheet. You can monitor heating 
 activity in real-time by viewing the Google Sheet.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  README.md --created by ChatGPT, edited by William Lucid, Retired Computer Specialist.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  README.md --created by ChatGPT, edited and project created by William Lucid, Retired Computer Specialist.  Project collabation 
+from lead Assistant, ChatGPT; with assists from Geminni, and Copilot.
 
 ---
 
