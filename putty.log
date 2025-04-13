@@ -1,0 +1,163 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2025.04.12 18:04:50 =~=~=~=~=~=~=~=~=~=~=~=
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:1344
+load:0x40078000,len:13964
+load:0x40080400,len:3600
+entry 0x400805f0
+
+
+
+Heating System Monitor --ESP-Now Master
+
+
+Connecting to WiFi.WiFi connected
+Local IP: 10.0.0.13
+STA MAC: 3C:E9:0E:84:EE:80
+STA CHANNEL 4
+wait for first valid timestamp
+.Sat-04-12-2025--18:04:57
+FS init: ok
+ESP-NOW initialized successfully
+Peer added successfully
+
+
+
+Heat Alert triggered or daily needed!
+
+Heat is ON
+
+RegisterTemp:  66.00
+Elapsed Minutes (min): 1.00
+
+RegisterTemp:  67.00
+Elapsed Minutes (min): 2.00
+
+RegisterTemp:  68.00
+Elapsed Minutes (min): 3.00
+
+RegisterTemp:  69.00
+Elapsed Minutes (min): 4.00
+
+RegisterTemp:  70.00
+Elapsed Minutes (min): 5.00
+DailyTotalMinutes:  5.00
+ Heating is OFF
+
+Alert Flag Sent Successfully!
+
+
+Last Packet Sent to: e4:65:b8:25:42:f8
+Last packet sent Status: Success
+Updated BME280Readings:
+Temperature: 86.31
+Humidity: 20.73
+Pressure: 29.29
+
+----- Heating System Monitor -----
+Sat-04-12-2025--18:08:52
+Outside Temp: 86.31°F
+Inside Temp: 85.05°F
+Register Temp: 80.80°F
+ThermostatSetpoint: 70.00°F
+Elapsed time of event (minutes) : 0
+Total elapsed time (24 hr): 0
+----------Resets at Midnight---------
+File does not exist, creating...
+Logging data...
+Log written successfully.
+
+Data sent to Google Sheets!
+Sat-04-12-2025--18:08:52&lastUpdate=Sat-04-12-2025--18:08:52&outsideTemp=86.31&insideTemp=85.12&registerTemp=80.80&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=5.00
+POST data to spreadsheet:https://script.google.com/macros/s/AKfycbzHopYwRo0G4NAiIIMmiWVUlUJPBycbyDzkx2AaVSJTN8691DIfSjqd4h4I4UAxhMkv/exec?&lastUpdate=Sat-04-12-2025--18:08:52&outsideTemp=86.31&insideTemp=85.12&registerTemp=80.80&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=5.00
+
+HTTP Status Code: 200
+Payload: ["Sat-04-12-2025--18:08:52",86.31,85.12,80.8,70,5,5]
+
+RegisterTemp:  66.00
+Elapsed Minutes (min): 1.00
+
+RegisterTemp:  67.00
+Elapsed Minutes (min): 2.00
+
+RegisterTemp:  68.00
+Elapsed Minutes (min): 3.00
+
+RegisterTemp:  69.00
+Elapsed Minutes (min): 4.00
+
+RegisterTemp:  70.00
+Elapsed Minutes (min): 5.00
+DailyTotalMinutes:  10.00
+ Heating is OFF
+
+Alert Flag Sent Successfully!
+
+
+Last Packet Sent to: e4:65:b8:25:42:f8
+Last packet sent Status: Fail
+
+----- Heating System Monitor -----
+Sat-04-12-2025--18:13:52
+Outside Temp: 86.31°F
+Inside Temp: 85.01°F
+Register Temp: 81.59°F
+ThermostatSetpoint: 70.00°F
+Elapsed time of event (minutes) : 0
+Total elapsed time (24 hr): 0
+----------Resets at Midnight---------
+Logging data...
+Log written successfully.
+
+Data sent to Google Sheets!
+Sat-04-12-2025--18:13:52&lastUpdate=Sat-04-12-2025--18:13:52&outsideTemp=86.31&insideTemp=85.01&registerTemp=81.59&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=15.00
+POST data to spreadsheet:https://script.google.com/macros/s/AKfycbzHopYwRo0G4NAiIIMmiWVUlUJPBycbyDzkx2AaVSJTN8691DIfSjqd4h4I4UAxhMkv/exec?&lastUpdate=Sat-04-12-2025--18:13:52&outsideTemp=86.31&insideTemp=85.01&registerTemp=81.59&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=15.00
+
+HTTP Status Code: 200
+Payload: ["Sat-04-12-2025--18:13:52",86.31,85.01,81.59,70,5,15]
+
+RegisterTemp:  66.00
+Elapsed Minutes (min): 1.00
+
+RegisterTemp:  67.00
+Elapsed Minutes (min): 2.00
+
+RegisterTemp:  68.00
+Elapsed Minutes (min): 3.00
+
+RegisterTemp:  69.00
+Elapsed Minutes (min): 4.00
+
+RegisterTemp:  70.00
+Elapsed Minutes (min): 5.00
+DailyTotalMinutes:  15.00
+ Heating is OFF
+
+Alert Flag Sent Successfully!
+
+
+Last Packet Sent to: e4:65:b8:25:42:f8
+Last packet sent Status: Fail
+
+----- Heating System Monitor -----
+Sat-04-12-2025--18:18:52
+Outside Temp: 86.31°F
+Inside Temp: 85.19°F
+Register Temp: 82.96°F
+ThermostatSetpoint: 70.00°F
+Elapsed time of event (minutes) : 0
+Total elapsed time (24 hr): 0
+----------Resets at Midnight---------
+Logging data...
+Log written successfully.
+
+Data sent to Google Sheets!
+Sat-04-12-2025--18:18:52&lastUpdate=Sat-04-12-2025--18:18:52&outsideTemp=86.31&insideTemp=85.19&registerTemp=82.81&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=30.00
+POST data to spreadsheet:https://script.google.com/macros/s/AKfycbzHopYwRo0G4NAiIIMmiWVUlUJPBycbyDzkx2AaVSJTN8691DIfSjqd4h4I4UAxhMkv/exec?&lastUpdate=Sat-04-12-2025--18:18:52&outsideTemp=86.31&insideTemp=85.19&registerTemp=82.81&extraThermoTemp=70.00&elapsedMinutes=5.00&dailyTotalMinutes=30.00
+
+HTTP Status Code: 200
+Payload: ["Sat-04-12-2025--18:18:52",86.31,85.19,82.81,70,5,30]
