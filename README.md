@@ -27,7 +27,7 @@ This project utilizes two ESP32 microcontrollers communicating via ESP-NOW proto
 
 ### Hardware Setup
 
-Project used 2- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presicion temperpature sensor with interrup pin, and a MLX90614 infaRed temperature sensor.  Outside Slave used a BME280. 
+Project used 2- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presicion temperature sensor with interrup pin, and a MLX90614 Infrared temperature sensor.  Outside Slave used a BME280. 
 
 1. **Master Device**:
    - Connect the ESP32 to a sensor or input that can detect heating system activity (e.g., temperature sensor, current sensor).
