@@ -1,11 +1,13 @@
 /*
 
-	    daily System Monitor  << ESP Now --Master>> April 12 21:32 @ 17:26 EST
+	    Heating System Monitor  << ESP Now --Master>> April 12, 2025 @ 17:26 EST
 	
  	              ESP-Now code for Outside Temperature; BME280 sensor. 
-     Developed by Wlliam Lucid in Colaboration with Microsoft's Copilot, OpenAI's ChatGPT, Google's Gemini
-			
-     Project uses 2- ESP32 DevKit V1 Boards, 1- BME280, 1- MCP9808, 1- MLX90614
+		
+		    Developed by Wlliam Lucid in Colaboration with Microsoft's Copilot,
+		         OpenAI's ChstGPT, and Google's Gemini   
+
+                Project uses 2- ESP32 DevKit V1 Boards, 1- BME280, 1- MCP9808, 1- MLX90614
 
 */
 
@@ -24,7 +26,6 @@
 #include <Ticker.h>
 #include <WiFiManager.h>
 #include <HTTPClient.h>
-#include "Ticker.h"
 
 Ticker oneMinuteTicker;
 
