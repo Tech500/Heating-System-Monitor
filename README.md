@@ -58,7 +58,7 @@ activity in real-time by viewing the Google Sheet.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  README.md --created by ChatGPT, edited and project created by William Lucid, Retired Computer Specialist.  Project collabation 
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  README.md --created by ChatGPT, edited by and project created by William Lucid, Retired Computer Specialist.  Project collabation 
 from lead Assistant, ChatGPT; with assists from Geminni, and Copilot.
 
 ---
