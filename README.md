@@ -17,7 +17,7 @@ This project utilizes two ESP32 microcontrollers communicating via ESP-NOW proto
 ## Components
 
 - **ESP-Now_Master.ino**: Firmware for the master ESP32 device responsible for detecting heating activity and sending data.
-- **ESP-Now_Slave.ino**: Firmware for the slave ESP32 device that receives data from the master and processes it.
+- **ESP-Now_Slave.ino**: Firmware for the slave ESP32 device that receives signal from the master and sends BME280 data to master.
 - **Google Script --Heating System Monitor.txt**: Google Apps Script to handle incoming data and log it to Google Sheets.
 - **Heating System Monitor GS.jpg**: Diagram illustrating the Google Sheets setup.
 - **Heating System Monitor.mp4**: Demonstration video showcasing the system in operation.
