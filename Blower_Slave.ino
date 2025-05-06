@@ -18,8 +18,8 @@
 #include <esp_now.h>
 
 // WiFi credentials
-const char *ssid = "R2D2";
-const char *password = "sissy4357";
+const char *ssid = "Removed";
+const char *password = "Removed";
 
 #define CHANNEL 4
 
