@@ -2,7 +2,7 @@ const sheet_id = "Sheet ID removed";
 
 //Script based on this article:  https://iotdesignpro.com/articles/esp32-data-logging-to-google-sheets-with-google-scripts
 
-const headers = ['lastUpdate', 'outsideTemp', 'insideTemp', 'registerTemp', 'extraThermoTemp', 'elapsedMinutes', 'dailyTotalMinutes'];
+const headers = ['lastUpdate', 'outsideTemp', 'insideTemp', 'registerTemp', 'thermostat', 'elapsedMinutes', 'dailyTotalMinutes'];
 
 const now = new Date();
 const sheetName = `${getMonthNames(now.getMonth())} ${now.getFullYear()}`;
@@ -17,15 +17,15 @@ function doGet(e) {
   var outsideTemp = e.parameter.outsideTemp ? parseFloat(e.parameter.outsideTemp) : NaN;
   var insideTemp = e.parameter.insideTemp ? parseFloat(e.parameter.insideTemp) : NaN;
   var registerTemp = e.parameter.registerTemp ? parseFloat(e.parameter.registerTemp) : NaN;
-  var extraThermoTemp = e.parameter.extraThermoTemp ? parseFloat(e.parameter.extraThermoTemp) : NaN;
+  var thermostat = e.parameter.thermostat ? parseFloat(e.parameter.thermostat) : NaN;
   var elapsedMinutes = e.parameter.elapsedMinutes ? parseFloat(e.parameter.elapsedMinutes) : NaN;
   var dailyTotalMinutes = e.parameter.dailyTotalMinutes ? parseFloat(e.parameter.dailyTotalMinutes) : NaN;
 
   // data = var to be appended to every row of Goole Sheet.
-  const data = [lastUpdate, outsideTemp, insideTemp, registerTemp, extraThermoTemp, elapsedMinutes, dailyTotalMinutes];
+  const data = [lastUpdate, outsideTemp, insideTemp, registerTemp, thermostat, elapsedMinutes, dailyTotalMinutes];
 
   // Logs data to the console
-  console.log(lastUpdate, outsideTemp, insideTemp, registerTemp, extraThermoTemp, elapsedMinutes, dailyTotalMinutes);
+  console.log(lastUpdate, outsideTemp, insideTemp, registerTemp, thermostat, elapsedMinutes, dailyTotalMinutes);
 
   //Checks for end of the month; if true creates new sheet. 
   if (isEndOfMonth(now)) {
@@ -67,4 +67,32 @@ function logData(sheet, data) {
     sheet.appendRow(headers);
   }
   sheet.appendRow(data);
+}
+
+function insertMidnightSummary() {
+  const now = new Date();
+  const sheetName = `${getMonthNames(now.getMonth())} ${now.getFullYear()}`;
+  const ss = SpreadsheetApp.openById(sheet_id);
+  const sheet = ss.getSheetByName(sheetName);
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) return; // nothing to summarize
+
+  // Get last totals from today's data
+  const lastData = sheet.getRange(lastRow, 1, 1, 9).getValues()[0];
+  const total = lastData[6]; // dailyTotalMinutes
+  const count = lastData[7]; // eventCount
+  const avg = lastData[8];   // avgRunTimeMinutes
+
+  // Build summary row
+  const summaryRow = [
+    Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyy-MM-dd 00:00"), // lastUpdate
+    "", "", "", "", // temps
+    "",             // elapsedMinutes (blank)
+    total,
+    count,
+    avg
+  ];
+
+  sheet.appendRow(summaryRow);
 }
