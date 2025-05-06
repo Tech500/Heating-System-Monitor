@@ -1,13 +1,13 @@
 /*
 
-	    Heating System Monitor  << ESP Now --Master>> April 12, 2025 @ 17:26 EST
+	    Heating System Monitor  << ESP Now --Master>> May 6, 2025 @ 05:41 EDT
 	
- 	              ESP-Now code for Outside Temperature; BME280 sensor. 
+ 	              ESP-Now --Master code.
 		
 		    Developed by Wlliam Lucid in Colaboration with Microsoft's Copilot,
 		         OpenAI's ChstGPT, and Google's Gemini   
 
-                Project uses 2- ESP32 DevKit V1 Boards, 1- BME280, 1- MCP9808, 1- MLX90614
+                Project uses 3- ESP32 DevKit V1 Boards, 1- BME280, 1- MCP9808, 1- MLX90614, 1- MAX9914
 
 */
 
@@ -16,7 +16,7 @@
 #include "mcp9808.h"
 #include "Adafruit_MLX90614.h"
 #include <esp_now.h>
-#include <WiFi.h> 
+#include <WiFi.h>
 #include <esp_wifi.h>
 #include <WiFiUdp.h>
 #include <SPIFFS.h>
@@ -27,16 +27,25 @@
 #include <WiFiManager.h>
 #include <HTTPClient.h>
 
-Ticker oneMinuteTicker;
+Ticker secondTicker;
 
 FTPServer ftpSrv(LittleFS);
 
 volatile unsigned long lastISRTime = 0;  // For interrupts
 
-unsigned long lastRequestTime = 0;   // For timers
-bool dataReadyFlag = false;          // Timer flag
-float dailyEventTotalMinutes = 0.0;  // Daily runtime
-int dailyEventCount = 0;             // Daily event count
+bool blowerOn = false;
+bool blowerIsOn = false;   // Current state
+bool blowerWasOn = false;  // For edge detection
+unsigned long blowerStartTime = 0;
+unsigned long blowerElapsedTime = 0;
+unsigned long lastEventMinutes = 0;
+unsigned long blowerDailyTotal = 0;
+
+volatile bool oneSecondElapsed = false;
+
+void IRAM_ATTR countSecondsISR() {
+  oneSecondElapsed = true;
+}
 
 String getDateTime();
 float readSensorTemperature();
@@ -48,13 +57,10 @@ void processRequest();
 void calculateAverageRuntime();
 void sendGoogleSheetsData();
 void simulateTemperatureChange();
-void checkdailyStatus();
-
 
 // WiFi credentials
 const char *ssid = "R2D2";
 const char *password = "sissy4357";
-
 
 WiFiUDP udp;
 // local port to listen for UDP packets
@@ -64,13 +70,16 @@ char replyPacket[] = "Hi there! Got the message :-)";
 const char *udpAddress1 = "pool.ntp.org";
 const char *udpAddress2 = "time.nist.gov";
 
-String GOOGLE_SCRIPT_ID = "AKfycbzHopYwRo0G4NAiIIMmiWVUlUJPBycbyDzkx2AaVSJTN8691DIfSjqd4h4I4UAxhMkv";  //Deployment ID: Double
+String GOOGLE_SCRIPT_ID = "AKfycbx1jEvMGky6CRXfQkIJOd8kPWIc4F33dF2gDZaDmlplIiS5byQy86C1QNEBHyMQxHaN";  //Deployment ID: Double
 
 //master MAC address
 uint8_t masterAddress[] = { 0x3C, 0xE9, 0x0E, 0x84, 0xEE, 0x80 };  // Replace with receiver's MAC address
 
-//slaveMAC address
-uint8_t slaveAddress[] = { 0xE4, 0x65, 0xB8, 0x25, 0x42, 0xF8 };  // Replace with your slave's MAC address
+// First peer (BME280 sender)
+uint8_t slave1Address[] = { 0xE4, 0x65, 0xB8, 0x25, 0x42, 0xF8 };  // Replace with actual MAC
+
+// Second peer (Blower sound detector)
+uint8_t slave2Address[] = { 0x30, 0x30, 0xF9, 0x33, 0x4B, 0x78 };  // Replace with actual MAC
 
 WiFiClient client;
 
@@ -97,6 +106,10 @@ String dtStamp(strftime_buf);
 
 String lastUpdate;  //Store dtStamp for String data
 
+float elapsedMinutes = 0;
+float dailyTotalMinutes = 0;
+float secondsCounter = 0;
+
 HTTPClient http;
 
 
@@ -105,6 +118,11 @@ HTTPClient http;
 //Interrupt routine
 volatile bool alertFlag = false;
 
+enum MessageType : uint8_t {
+  MSG_BME280 = 0,
+  MSG_ALERT_FLAG = 1,
+  MSG_BLOWER_STATE = 2
+};
 
 float temp;
 float hum;
@@ -112,32 +130,29 @@ float pres;
 
 // Define variables to store incoming readings
 
-
-
-//Hold BME280 sensor readings
-typedef struct struct_message1 {
-  float temp;  // Temperature
-  float hum;   // Humidity
-  float pres;  // Pressure
+struct BME280Data {
+  MessageType type;
+  float temp;
+  float hum;
+  float pres;
 };
 
-struct_message1 BME280Readings;
+BME280Data localReadings;  // For readings from the local sensor
+BME280Data data;           // For received values
 
-//incming holding for sensor readings
-typedef struct struct_message2 {
-  float incomingTemp;  // Temperature
-  float incomingHum;   // Humidity
-  float incomingPres;  // Pressure
+BME280Data incomingReadings;
+
+volatile float globalTemp;
+
+struct __attribute__((packed)) AlertFlag {
+  MessageType type;
+  bool alert;
 };
 
-struct_message2 incomingReadings;
-
-// Define alertFlag sending
-struct struct_send {
-  boolean alertFlag;
+struct __attribute__((packed)) BlowerData {
+  MessageType type;
+  bool on;
 };
-
-struct struct_send sendAlert;
 
 //RTC Memory structure
 struct RtcData {
@@ -147,8 +162,7 @@ struct RtcData {
 
 RtcData rtcData;
 
-
-String data;      //String of data sent to Google Sheets
+String keyValue;  //String of data sent to Google Sheets
 String urlFinal;  //url for Googlesheets
 
 void onSent(const uint8_t *macAddr, esp_now_send_status_t status) {
@@ -158,49 +172,65 @@ void onSent(const uint8_t *macAddr, esp_now_send_status_t status) {
 
 esp_now_peer_info_t peerInfo;
 
-//Callback when sensordata is sent from Master to Slave
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  char macStr[18];
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print("\n\nLast Packet Sent to: ");
-  Serial.println(macStr);
-  Serial.print("Last packet sent Status: ");  //status???
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success" : "Fail");
-}
-
-/// Callback when sensordata is received
-void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
-  if (len == sizeof(struct_message1)) {                              // Check for BME280 sensor readings
-    memcpy(&BME280Readings, incomingData, sizeof(struct_message1));  // Update global struct
-
-    // Debug: Print BME280 readings
-    Serial.println("Updated BME280Readings:");
-    Serial.print("Temperature: ");
-    Serial.println(BME280Readings.temp);
-    Serial.print("Humidity: ");
-    Serial.println(BME280Readings.hum);
-    Serial.print("Pressure: ");
-    Serial.println(BME280Readings.pres * 0.02952998751);
-  } else if (len == sizeof(struct_send)) {                  // Check for alertFlag data
-    memcpy(&sendAlert, incomingData, sizeof(struct_send));  // Update global alertFlag
-
-    // Debug: Print the alert flag
-    Serial.print("Received alertFlag: ");
-    Serial.println(sendAlert.alertFlag);
-  } else {  // Catch-all for mismatched data sizes
-    Serial.println("Received data size mismatch.");
+void onRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+  if (len <= 0) {
+    Serial.println("Error: Empty or invalid message received.");
+    return;
   }
-}
 
-void sendAlertFlag() {
-  sendAlert.alertFlag = alertFlag;
-  esp_err_t result = esp_now_send(slaveAddress, (uint8_t *)&sendAlert, sizeof(sendAlert));
-  if (result == ESP_OK) {
-    Serial.println("\nAlert Flag Sent Successfully!");
-  } else {
-    Serial.print("\nError sending Alert Flag: ");
-    Serial.println(esp_err_to_name(result));
+  uint8_t type = incomingData[0];
+
+  switch (type) {
+    case MSG_BME280:
+      if (len == sizeof(BME280Data)) {
+        BME280Data data;
+        memcpy(&data, incomingData, sizeof(data));
+        incomingReadings = data;  // Save latest readings globally
+
+        Serial.println("Updated BME280Readings:");
+        Serial.print("Temperature: ");
+        Serial.println(data.temp);
+        Serial.print("Humidity: ");
+        Serial.println(data.hum);
+        Serial.print("Pressure: ");
+        Serial.println(data.pres * 0.02952998751);  // hPa → inHg
+
+        globalTemp = data.temp;
+        // Update the global variable
+      } else {
+        Serial.println("BME280 message size mismatch");
+      }
+      break;
+
+
+    case MSG_ALERT_FLAG:
+      {
+        if (len == sizeof(AlertFlag)) {
+          AlertFlag receivedAlert;
+          memcpy(&receivedAlert, incomingData, sizeof(AlertFlag));
+          Serial.print("Alert flag received: ");
+          Serial.println(receivedAlert.alert ? "TRUE" : "FALSE");
+        } else {
+          Serial.println("Error: Incorrect AlertFlag size.");
+        }
+        break;
+      }
+
+    case MSG_BLOWER_STATE:
+      if (len == sizeof(BlowerData)) {
+        BlowerData blower;
+        memcpy(&blower, incomingData, sizeof(BlowerData));
+        Serial.print("Blower on: ");
+        Serial.println(blower.on ? "YES" : "NO");
+
+        // ✅ Update the global flag used in loop()
+        blowerIsOn = blower.on;
+
+      } else {
+        Serial.print("Invalid BlowerData size. Received: ");
+        Serial.println(len);
+      }
+      break;
   }
 }
 
@@ -234,8 +264,8 @@ struct heatingData {
   float outsideTemp;
   float insideTemp;
   float registerTemp;
-  float extraThermoTemp;
-  float elapsedMinutes;
+  float thermostat;
+  float lastEventMinutes;
   float dailyTotalMinutes;
   float lastRecordedMinute;
 };
@@ -273,14 +303,11 @@ void configTime() {
   Serial.println(dtStamp);
 }
 
-
 // Thermostat setpoint (update as needed)
 float thermostatSetpoint = 70.0;  // 70°F in Celsius
 
-float elapsedMinutes = 0;
-float dailyTotalMinutes = 0;  // Declare dailyTotalMinutes globally
-float heatStartTime = 0;      // Declare dailyStartTime globally
-bool heatActive = false;      // Declare dailyActive globally
+float heatStartTime = 0;  // Declare dailyStartTime globally
+bool heatActive = false;  // Declare dailyActive globally
 
 //float registerTemp = sensordata.registerTemp;  // Read register temperature
 float LOW_TEMP_F = 65.0;   // Example in °F
@@ -294,55 +321,13 @@ float registerTemp = 65;           // Initialize to a default temperature
 float simulatedroomRegister = 65;  // Matching initialization for simulation
 
 void updateHeatingData() {
-  //Replace with actual sensor readings                         //Store slave's outsideTemp
-  sensordata.outsideTemp = BME280Readings.temp;           //bme280 temperature
-  sensordata.insideTemp = mlx.readAmbientTempF();         //ambient temperature
-  sensordata.registerTemp = mlx.readObjectTempF();        //Register temperature
-  sensordata.extraThermoTemp = 70.0;                      //themostaticSetpoint (fixed value)
-  sensordata.elapsedMinutes = elapsedMinutes;  //heat event runtime in minutes
-  sensordata.dailyTotalMinutes += dailyTotalMinutes;
-}
-
-
-void onMinute() {   //Ticher.h one minute Interrupt
-  if (registerTemp != thermostatSetpoint) {
-    // Your code here to execute every minute
-    registerTemp++;
-    elapsedMinutes++;
-    Serial.print("\nRegisterTemp:  ");
-    Serial.println(registerTemp);
-    Serial.print("Elapsed Minutes (min): ");
-    Serial.println(elapsedMinutes);
-    if (registerTemp == thermostatSetpoint) {
-      dailyTotalMinutes += elapsedMinutes;
-      Serial.print("DailyTotalMinutes:  ");
-      Serial.println(dailyTotalMinutes);
-      Serial.println("❄️ Heating is OFF");
-      alertFlag = true;
-    }
-  }
-}
-
-void checkdailyStatus() {
-  if (heatAlert || (!heatActive && registerTemp < thermostatSetpoint)) {
-    Serial.println("\nHeat Alert triggered or daily needed!");
-
-    if (!heatActive && registerTemp < thermostatSetpoint) {
-      heatActive = true;
-      Serial.println("\n🔥Heat is ON");
-      onMinute();  //Ticker.h increament by one minute
-
-    }
-
-    if (heatActive && registerTemp >= thermostatSetpoint) {
-      heatActive = false;
-      Serial.println("❄️ daily OFF");
-      Serial.print("Elapsed Minutes (min): ");
-      Serial.println(elapsedMinutes);
-      Serial.print("Total daily (min): ");
-      Serial.println(dailyTotalMinutes);
-    }
-  }
+  //Replace with actual sdata.tempngs                         //Store slave's outsideTemp
+  sensordata.outsideTemp = globalTemp;               //bme280 temperature
+  sensordata.insideTemp = mlx.readAmbientTempF();    //ambient temperature
+  sensordata.registerTemp = mlx.readObjectTempF();   //Register temperature
+  sensordata.thermostat = 70.0;                 //themostaticSetpoint (fixed value)
+  sensordata.lastEventMinutes = lastEventMinutes;        //heat event runtime in minutes
+  sensordata.dailyTotalMinutes = dailyTotalMinutes;  //total daily runtime in minutes
 }
 
 void resetDailySum() {               // Reset at midnight
@@ -354,16 +339,33 @@ void displayData() {
   getDateTime();
   Serial.println("\n----- Heating System Monitor -----");
   Serial.print(dtStamp);
-  Serial.printf("\nOutside Temp: %.2f°F\n", BME280Readings.temp);
+  Serial.printf("\nOutside.temp: %.2f°F\n", globalTemp);
   Serial.printf("Inside Temp: %.2f°F\n", sensordata.insideTemp);
   Serial.printf("Register Temp: %.2f°F\n", sensordata.registerTemp);
-  Serial.printf("ThermostatSetpoint: %.2f°F\n", sensordata.extraThermoTemp);
-  Serial.printf("Elapsed time of event (minutes) : %d\n", sensordata.elapsedMinutes);
-  Serial.printf("Total elapsed time (24 hr): %d\n", sensordata.dailyTotalMinutes);
+  Serial.printf("Thermostat: %.2f°F\n", sensordata.thermostat);
+  Serial.printf("Elapsed time of event (minutes) : %d\n", lastEventMinutes);
+  Serial.printf("Total elapsed time (24 hr): %d\n",  dailyTotalMinutes);
   Serial.println("----------Resets at Midnight---------");
 }
 
-void sendDataToServer(String lastUpdate, float outsideTemp, float insideTemp, float registerTemp, float extraThermoTemp, float elapsedMinutes, float dailyTotalMinutes) {
+void sendData(bool alertFlag) {
+  AlertFlag alertData;
+  alertData.type = MSG_ALERT_FLAG;
+  alertData.alert = alertFlag;
+
+  esp_err_t result = esp_now_send(slave1Address, (uint8_t *)&alertData, sizeof(AlertFlag));
+
+  if (result == ESP_OK) {
+    Serial.print("Alert flag sent successfully: ");
+    Serial.println(alertFlag);
+  } else {
+    Serial.print("Error sending alert flag: ");
+    Serial.println(esp_err_to_name(result));
+  }
+}
+
+
+void sendDataToServer(String lastUpdate, float outsideTemp, float insideTemp, float registerTemp, float thermostat, float lastEventMinutes, float dailyTotalMinutes) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Not connected to WiFi!");
     return;
@@ -372,17 +374,17 @@ void sendDataToServer(String lastUpdate, float outsideTemp, float insideTemp, fl
   // Construct the URL
   getDateTime();  // Fetch the formatted date-time string
   Serial.print(dtStamp);
-  String data = "&lastUpdate=" + dtStamp
-                + "&outsideTemp=" + BME280Readings.temp
-                + "&insideTemp=" + mlx.readAmbientTempF()
-                + "&registerTemp=" + mlx.readObjectTempF()
-                + "&extraThermoTemp=" + sensordata.extraThermoTemp
-                + "&elapsedMinutes=" + sensordata.elapsedMinutes
-                + "&dailyTotalMinutes=" + sensordata.dailyTotalMinutes;
+  String keyValue = "&lastUpdate=" + dtStamp
+                    + "&outsideTemp=" + globalTemp
+                    + "&insideTemp=" + mlx.readAmbientTempF()
+                    + "&registerTemp=" + mlx.readObjectTempF()
+                    + "&thermostat=" + sensordata.thermostat
+                    + "&elapsedMinutes=" + sensordata.lastEventMinutes
+                    + "&dailyTotalMinutes=" + sensordata.dailyTotalMinutes;
 
-  Serial.println(data);
+  Serial.println(keyValue);
 
-  String urlFinal = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + data;
+  String urlFinal = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + keyValue;
   Serial.print("POST data to spreadsheet:");
   urlFinal.replace(" ", "%20");
   Serial.println(urlFinal);
@@ -435,19 +437,6 @@ float simulatedAmbient = 65.0;  // Initialize temperature globally
 const float minTemperature = 65.0;
 const float maxTemperature = 75.0;
 
-void simulateTemperatureChange() {
-  if (alertFlag) {
-    delay(200);
-    simulatedroomRegister = 65;            // Random temperature range
-    registerTemp = simulatedroomRegister;  // Update global `registerTemp`
-
-    Serial.print("\nregisterTemp: ");
-    Serial.println(registerTemp);
-
-    checkdailyStatus();
-  }
-}
-
 unsigned long previousMillis = 0;      // Stores the last time the temperature was updated
 const unsigned long interval = 10000;  // Interval of 10 seconds
 
@@ -457,12 +446,14 @@ void setup() {
 
   Serial.println("\n\n\nHeating System Monitor --ESP-Now Master\n\n");
 
-  oneMinuteTicker.attach(60.0, onMinute);  // Attach a ticker to trigger every 60 seconds
-
   while (!Serial) {};
   randomSeed(analogRead(0));
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi");
+
+  // Set WiFi to Station mode (required for ESP-NOW)
+  WiFi.mode(WIFI_STA);
+  Serial.println("WiFi STA mode set");
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -483,13 +474,15 @@ void setup() {
   bool fsok = LittleFS.begin(true);
   Serial.printf_P(PSTR("FS init: %s\n"), fsok ? PSTR("ok") : PSTR("fail!"));
 
-  LittleFS.format();
+  //LittleFS.format();
 
   // setup the ftp server with username and password
   // ports are defined in FTPCommon.h, default is
   //   21 for the control connection
   //   50009 for the data connection (passive mode by default)
   ftpSrv.begin(F("admin"), F("admin"));  //username, password for ftp.
+
+  secondTicker.attach(1, countSecondsISR);
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
@@ -507,22 +500,32 @@ void setup() {
 
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
-  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_send_cb(onSent);
 
   // Register peer
-  memcpy(peerInfo.peer_addr, slaveAddress, 6);
+  memcpy(peerInfo.peer_addr, slave1Address, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Failed to add peer 1");
+  }
+
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, slave2Address, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
-  // Add peer
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
-    return;
+  if (!esp_now_is_peer_exist(slave2Address)) {
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+      Serial.println("Failed to add Blower peer");
+    } else {
+      Serial.println("Blower peer added.");
+    }
   }
-  Serial.println("Peer added successfully\n\n");
+
 
   // Register for a callback function that will be called when sensordata is received
-  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
+  esp_now_register_recv_cb(esp_now_recv_cb_t(onRecv));
 
   // Set thresholds
   ts.setTlower(LOW_TEMP_C);
@@ -547,32 +550,89 @@ void setup() {
   }
 }
 
+bool googleSheetsSent = false;  // Flag to track if data has been sent
+
 void loop() {
-  if (heatAlert) {
-    heatAlert = false;
-    Serial.println("🔥 Heating event detected via ALERT pin!");
-    checkdailyStatus();
+  for (int x = 1; x < 5000; x++)
+  {
+    ftpSrv.handleFTP();    
   }
 
-  checkdailyStatus();
+  static bool lastBlowerState = false;  // Track previous blower state
 
-  if(alertFlag){
+  if (oneSecondElapsed) {
+    oneSecondElapsed = false;
+
+    // Count time only if blower is on
+    if (blowerIsOn) {
+      secondsCounter++;
+      elapsedMinutes = secondsCounter / 60;
+
+      // Debug
+      Serial.print("Seconds: ");
+      Serial.print(secondsCounter);
+      Serial.print("  Elapsed min: ");
+      Serial.print(elapsedMinutes);
+      Serial.print("  Daily total: ");
+      Serial.println(dailyTotalMinutes);
+    }
+
+    if (lastBlowerState && !blowerIsOn) {
+      // Blower just turned OFF
+      lastEventMinutes = elapsedMinutes;  // Save for Google Sheets
+      dailyTotalMinutes += lastEventMinutes;
+
+      Serial.printf("Blower OFF. Added %lu min to daily total. New total: %lu min\n",
+                    lastEventMinutes, dailyTotalMinutes);
+
+      updateHeatingData();
+      alertFlag = true;
+
+      // Reset event counters
+      elapsedMinutes = 0;
+      secondsCounter = 0;
+    }
+
+    static bool didMidnightReset = false;
+
+    if (HOUR == 0 && MINUTE == 0 && SECOND == 0) {
+      if (!didMidnightReset) {
+        dailyTotalMinutes = 0;
+        Serial.println("Midnight reset: dailyTotalMinutes = 0");
+        didMidnightReset = true;
+      }
+    } else {
+      didMidnightReset = false;  // Ready for the next midnight
+    }
+
+    // Update last state
+    lastBlowerState = blowerIsOn;
+  }
+
+  // Condition for checking if it's time to send data to Google Sheets
+  if (alertFlag) {
     alertFlag = true;
-    sendAlertFlag();  //Request BME280 outside temperature
+    sendData(alertFlag);  // Request BME280 outside temperature
     delay(1000);
-    updateHeatingData();
     displayData();
     logData();
-    sendGoogleSheetsData();
+    sendGoogleSheetsData();  // Send to Google Sheets
+
+    googleSheetsSent = true;  // Flag Google Sheets data as sent
     alertFlag = false;
-    elapsedMinutes = 0;
-    checkdailyStatus();
+  }
+
+  // Reset elapsedSeconds after sending data to Google Sheets
+  if (googleSheetsSent) {
+    secondsCounter = 0; // Reset the seconds counter after Google Sheets update
+    lastEventMinutes = 0; 
+    googleSheetsSent = false;  // Reset flag for next cycle
   }
 }
 
 void resetDailyStats() {
-  dailyEventTotalMinutes = 0.0;
-  dailyEventCount = 0;
+  //dailyEventTotalMinutes = 0.0;
+  //dailyEventCount = 0;
   disabledailyCooling();  //Turn off daily/cooling systems
   Serial.println("Daily stats reset.");
 }
@@ -609,8 +669,8 @@ void logData() {
 
   log.print(dtStamp);
   log.print(" , ");
-  log.print("\tOutsideTemp: ");
-  log.print(BME280Readings.temp, 2);
+  log.print("\tOutsideTemp:  ");
+  log.print(globalTemp, 2);
   log.print(" °F,  ");
   log.print("\tInside Temp: ");
   log.print(sensordata.insideTemp, 2);
@@ -619,9 +679,9 @@ void logData() {
   log.print(thermostatSetpoint, 2);
   log.print(" °F,  ");
   log.print("\tElapsed Time of event:  ");
-  log.print(elapsedMinutes, 2);
+  log.print(sensordata.lastEventMinutes, 2);
   log.print(", \tTotal Runtime (24 HR): ");
-  log.print(dailyTotalMinutes, 2);
+  log.print(sensordata.dailyTotalMinutes, 2);
   log.print("\n");
 
   log.close();
@@ -629,16 +689,20 @@ void logData() {
 }
 
 void sendGoogleSheetsData() {
+  if(dailyTotalMinutes < 1){
+    return;  //skip sending to Google sheet
+  }
+
   getDateTime();
   // Collect the sensor sensordata
   String lastUpdate = dtStamp;  //lastUpdate global String used to store dtStamp
-  float outsideTemp = BME280Readings.temp;
+  float outsideTemp = globalTemp;
   float insideTemp = sensordata.insideTemp;
   float registerTemp = sensordata.registerTemp;
-  float extraThermoTemp = sensordata.extraThermoTemp;
-  float elapsedMinutes = elapsedMinutes;
+  float thermostat = sensordata.thermostat;
+  float lastEventMinutes = lastEventMinutes;
   float dailyTotalMinutes = dailyTotalMinutes;
   Serial.println("\nData sent to Google Sheets!");
   //Send sensordata data to Google Sheets for logging
-  sendDataToServer(lastUpdate, outsideTemp, insideTemp, registerTemp, extraThermoTemp, elapsedMinutes, dailyTotalMinutes);
+  sendDataToServer(lastUpdate, outsideTemp, insideTemp, registerTemp, thermostat, elapsedMinutes, dailyTotalMinutes);
 }
