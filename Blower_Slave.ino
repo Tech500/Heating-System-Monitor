@@ -3,6 +3,11 @@
 	    Heating System Monitor  << ESP Now --Blower Slave>> May 6, 2025 @ 04:06 EDT
 	
  	              ESP-Now code for Sound Detection. 
+
+  		   Developed by Wlliam Lucid in Colaboration with Microsoft's Copilot,
+		         OpenAI's ChstGPT, and Google's Gemini   
+
+                Project uses 3- ESP32 DevKit V1 Boards, 1- BME280, 1- MCP9808, 1- MLX90614, 1- MAX9914
 		
 */
 
