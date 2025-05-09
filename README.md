@@ -1,70 +1,84 @@
-
-# Heating System Monitor
+Heating System Monitor
 
 An ESP-NOW-based solution to monitor heating system activity without direct integration. This project logs heating events to a Google Sheets spreadsheet, providing a simple and effective way to track heating usage over time.
 
-## Overview
+Overview
 
-This project utilizes three ESP32 microcontrollers communicating via ESP-NOW protocol; one to detect sound and  one for outside tempture and and one to consoildate communications, plus logging heating system activity. 
-The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.  Optional hardware on Master; MCP9808 temperature sensor with alert pin, MLX90614 Infrared temperature sensor --have switched from temperature sensing to sound detection for sound of blower starting and stopping.  Outside ESP32, Slave; one BME280 used for sensing temperature.  Second ESP32 is used for blower sound detection --with DSP bandpass filtering allowing blower sound frequency range to pass.
+This project uses three ESP32 microcontrollers communicating via ESP-NOW: one for outside temperature, one for blower sound detection (using Blower_Slave.ino), and one as the master to consolidate communications and log heating system activity.
+The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.
 
-## Features  
+Features
 
-- **Wireless Monitoring**: Employs ESP-NOW for efficient, low-latency communication between devices.
-- **Non-Invasive Setup**: Monitors heating activity without requiring direct integration with the heating system.
-- **Data Logging**: Records heating events to a Google Sheets spreadsheet and local LittleFS for easy access and analysis.  Built-in FTP for viewing ESP32 log file.
-- **Visual Indicators**: Includes LED indicators to display system status and activity.
+Wireless Monitoring: Employs ESP-NOW for efficient, low-latency communication between devices.
 
-## Components
+Non-Invasive Setup: Monitors heating activity without requiring direct integration with the heating system.
 
-- **ESP-Now_Master.ino**: Firmware for the master ESP32 device responsible for detecting heating activity and sending data.
-- **ESP-Now_Slave.ino**: Firmware for the slave ESP32 device that receives signal from the master and sends BME280 data to master.
-- **Google Script --Heating System Monitor.txt**: Google Apps Script to handle incoming data and log it to Google Sheets.
-- **Heating System Monitor GS.jpg**: Diagram illustrating the Google Sheets setup.
-- **Heating System Monitor.mp4**: Demonstration video showcasing the system in operation.
-- **putty.log**: Sample log file capturing serial output for debugging purposes.
+Data Logging: Records heating events to a Google Sheets spreadsheet and local LittleFS for easy access and analysis. Built-in FTP for viewing ESP32 log file.
 
-## Setup Instructions
+Visual Indicators: Includes LED indicators to display system status and activity.
 
-### Hardware Setup
+Components
 
-Project used three- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presicion temperature sensor with interrup pin, and a MLX90614 Infrared temperature sensor.  Outside Slave used a BME280. 
+ESP-Now_Master.ino: Firmware for the master ESP32 device responsible for detecting heating activity and sending data.
 
-1. **Master Device**:
-   - Connect the ESP32 to a sensor or input that can detect heating system activity (e.g., temperature sensor, current sensor).
-   - Upload the `ESP-Now_Master.ino` firmware to the device.  
+ESP-Now_Slave.ino: Firmware for the slave ESP32 device that sends BME280 temperature data to the master.
 
-2. **Slave Device**:
-   - Connect the ESP32 to a Wi-Fi network with internet access.
-   - Upload the `ESP-Now_Slave.ino` firmware to the device.
+Blower_Slave.ino: Firmware for the second slave ESP32 device that detects blower sound.
 
-### Software Setup
+Google Script --Heating System Monitor.txt: Google Apps Script to handle incoming data and log it to Google Sheets.
 
-1. **Google Sheets**:
-   - Create a new Google Sheet to store heating event data.
-   - Open the Script Editor (`Extensions > Apps Script`).
-   - Paste the contents of `Google Script --Heating System Monitor.txt` into the editor.
-   - Deploy the script as a web app (`Deploy > New deployment`) and note the URL.
-   - 📘 *Need help with perpetual access to the web app?* Check out the guide: [Perpetual Script Execution with Google Sheets](https://gist.github.com/Tech500/57fe6a035e46da4112d6330a637367d0)
+Heating System Monitor GS.jpg: Diagram illustrating the Google Sheets setup.
 
-2. **ESP32 Configuration**:
-   - In the `ESP-Now_Slave.ino` file, update the `WEB_APP_URL` variable with the URL obtained from the Google Apps Script deployment.
-   - Ensure both ESP32 devices are configured with the correct Wi-Fi credentials and are within range for ESP-NOW communication.
+Heating System Monitor.mp4: Demonstration video showcasing the system in operation.
 
-## Usage
+putty.log: Sample log file capturing serial output for debugging purposes.
 
-Once set up, the master device cor-ordinates slave data and will detect heating system activity and send a signal to the slave devices via ESP-NOW. BME280 slave device will then send BME280data to the Master; which, will send 
-lastest updated project data in the form of key and value --in the form of a String, named "data" to Google Apps Script web app, which logs the event to the Monthly; perpetual, Google Sheet. You can monitor heating 
-activity in real-time by viewing the Google Sheet.
+Setup Instructions
 
-## License
+Hardware Setup
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.  README.md --created by ChatGPT, edited by and project created by William Lucid, Retired Computer Specialist.  Project collabation 
-from lead Assistant, ChatGPT; with assists from Geminni, and Copilot.
+Master ESP32: Connected to MCP9808 Precision temperature sensor with interrupt pin, and MLX90614 Infrared temperature sensor.
 
----
+Slave ESP32 (Outside): Connected to a BME280 temperature sensor.
 
-For more information, visual demonstrations, and troubleshooting, please refer to the included `Heating System Monitor.mp4` video and `putty.log` file.  
+Second Slave ESP32: Configured for blower sound detection using DSP bandpass filtering.
 
-Project was a collabitive effort by ChatGPT, Gemini, Copilot and William Lucid, Tech500.
+Software Setup
+
+Google Sheets:
+
+Create a new Google Sheet to store heating event data.
+
+Open the Script Editor (Extensions > Apps Script).
+
+Paste the contents of Google Script --Heating System Monitor.txt into the editor.
+
+Deploy the script as a web app and note the URL.
+
+📘 Need help with perpetual access to the web app? Check out the guide: [Perpetual Script Execution with Google Sheets](https://gist.github.com/Tech500/57fe6a035e46da4...
+}
+]
+}
+
+Create a new Google Sheet to store heating event data.
+
+Open the Script Editor (Extensions > Apps Script).
+
+Paste the contents of Google Script --Heating System Monitor.txt into the editor.
+
+Deploy the script as a web app and note the URL.
+
+ESP32 Configuration:
+
+Update the WEB_APP_URL variable in the firmware with the URL obtained from the Google Apps Script deployment.
+
+Usage
+
+Once set up, the master device coordinates data from the two slaves and sends the compiled data to Google Sheets.
+
+License
+
+This project is licensed under the MIT License. See the LICENSE file for details. Created by William Lucid, Tech500, with significant collaboration from ChatGPT, Gemini, and Copilot.
+
+For more information, visual demonstrations, and troubleshooting, please refer to the included Heating System Monitor.mp4 video and putty.log file.
 
