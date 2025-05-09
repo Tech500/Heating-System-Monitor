@@ -1,5 +1,5 @@
 Heating System Monitor
-An ESP-NOW-based solution to monitor heating system activity without direct integration. This project logs heating events to a Google Sheets spreadsheet, providing a simple and effective way to track heating usage over time.
+An ESP-NOW-based solution to monitor heating system activity without direct integration. This project logs heating events to a Google Sheets spreadsheet, providing a simple and effective way to track heating usage over time. 
 
 Overview
 
