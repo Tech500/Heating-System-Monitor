@@ -6,8 +6,7 @@ An ESP-NOW-based solution to monitor heating system activity without direct inte
 ## Overview
 
 This project utilizes three ESP32 microcontrollers communicating via ESP-NOW protocol; one to detect sound and  one for outside tempture and and one to consoildate communications, plus logging heating system activity. 
-The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.  Optional hardware on Master; MCP9808 temperature sensor with alert pin, MLX90614 Infrared temperature sensor --have switched from temperature sensing to sound detection for sound of blower starting and stopping.  Outside ESP32, Slave; one BME280 used for sensing temperature.  
-Second ESP32 is used for blower sound detection --with DSP bandpass filtering allowing blower sound frequency range to pass.
+The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.  Optional hardware on Master; MCP9808 temperature sensor with alert pin, MLX90614 Infrared temperature sensor --have switched from temperature sensing to sound detection for sound of blower starting and stopping.  Outside ESP32, Slave; one BME280 used for sensing temperature.  Second ESP32 is used for blower sound detection --with DSP bandpass filtering allowing blower sound frequency range to pass.
 
 ## Features  
 
