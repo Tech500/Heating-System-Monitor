@@ -66,5 +66,7 @@ from lead Assistant, ChatGPT; with assists from Geminni, and Copilot.
 
 ---
 
-For more information, visual demonstrations, and troubleshooting, please refer to the included `Heating System Monitor.mp4` video and `putty.log` file.
+For more information, visual demonstrations, and troubleshooting, please refer to the included `Heating System Monitor.mp4` video and `putty.log` file.  
+
+Project was a collabitive effort by ChatGPT, Gemini, Copilot and William Lucid, Tech500.
 
