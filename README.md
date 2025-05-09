@@ -5,13 +5,16 @@ An ESP-NOW-based solution to monitor heating system activity without direct inte
 
 ## Overview
 
-This project utilizes two ESP32 microcontrollers communicating via ESP-NOW protocol to detect and log heating system activity. The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.
+This project utilizes three ESP32 microcontrollers communicating via ESP-NOW protocol; one to detect sound and  one for outside tempture and and one to consoildate communications, plus logging heating system activity. 
+The system operates independently of the heating system's internal controls, making it a non-intrusive monitoring solution.  Optional hardware on Master; MCP9808 temperature sensor with alert pin, 
+MLX90614 Infrared temperature sensor --have switched from temperature sensing to sound detection for sound of blower starting and stopping.  Outside ESP32, Slave; one BME280 used for sensing temperature.  
+Second ESP32 is used for blower sound detection --with DSP bandpass filtering allowing blower sound frequency range to pass.
 
-## Features
+## Features  
 
 - **Wireless Monitoring**: Employs ESP-NOW for efficient, low-latency communication between devices.
 - **Non-Invasive Setup**: Monitors heating activity without requiring direct integration with the heating system.
-- **Data Logging**: Records heating events to a Google Sheets spreadsheet for easy access and analysis.
+- **Data Logging**: Records heating events to a Google Sheets spreadsheet and local LittleFS for easy access and analysis.  Built-in FTP for viewing ESP32 log file.
 - **Visual Indicators**: Includes LED indicators to display system status and activity.
 
 ## Components
@@ -27,7 +30,7 @@ This project utilizes two ESP32 microcontrollers communicating via ESP-NOW proto
 
 ### Hardware Setup
 
-Project used 2- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presicion temperature sensor with interrup pin, and a MLX90614 Infrared temperature sensor.  Outside Slave used a BME280. 
+Project used three- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presicion temperature sensor with interrup pin, and a MLX90614 Infrared temperature sensor.  Outside Slave used a BME280. 
 
 1. **Master Device**:
    - Connect the ESP32 to a sensor or input that can detect heating system activity (e.g., temperature sensor, current sensor).
@@ -52,7 +55,7 @@ Project used 2- ESP32 Devkit v1 Development boards, on the Master MCP9808 Presic
 
 ## Usage
 
-Once set up, the master device will detect heating system activity and send a signal to the slave device via ESP-NOW. The slave device will then send BME280data to the Master; which, will send 
+Once set up, the master device cor-ordinates slave data and will detect heating system activity and send a signal to the slave devices via ESP-NOW. BME280 slave device will then send BME280data to the Master; which, will send 
 lastest updated project data in the form of key and value --in the form of a String, named "data" to Google Apps Script web app, which logs the event to the Monthly; perpetual, Google Sheet. You can monitor heating 
 activity in real-time by viewing the Google Sheet.
 
