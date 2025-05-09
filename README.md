@@ -4,7 +4,9 @@ An ESP-NOW-based solution to monitor heating system activity without direct inte
 Overview
 
 This project uses three ESP32 microcontrollers communicating via ESP-NOW: one for outside temperature, one for blower sound detection (using Blower_Slave.ino), and one as the master to consolidate communications and log heating system activity. The system operates independently of the heating system’s internal controls, making it a non-intrusive monitoring solution.
+
 Features
+
 •	Wireless Monitoring: Employs ESP-NOW for efficient, low-latency communication between devices.
 •	Non-Invasive Setup: Monitors heating activity without requiring direct integration with the heating system.
 •	Data Logging: Records heating events to a Google Sheets spreadsheet and local LittleFS for easy access and analysis. Built-in FTP for viewing ESP32 log file.
