@@ -1,0 +1,44 @@
+//Top of sketch with globals
+
+String GOOGLE_SCRIPT_ID = "Deployment Id goes here..."; 
+//-----------------------------------------------------
+
+void sendDataToServer(String lastUpdate, float outsideTemp, float insideTemp, float registerTemp, float thermostat, float lastEventMinutes, float dailyTotalMinutes) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Not connected to WiFi!");
+    return;
+  }
+
+  // Construct the URL
+  getDateTime();  // Fetch the formatted date-time string; dtStamp
+  Serial.print(dtStamp);
+  String keyValue = "&lastUpdate=" + dtStamp
+                    + "&outsideTemp=" + globalTemp
+                    + "&insideTemp=" + mlx.readAmbientTempF()
+                    + "&registerTemp=" + mlx.readObjectTempF()
+                    + "&thermostat=" + sensordata.thermostat
+                    + "&elapsedMinutes=" + sensordata.lastEventMinutes
+                    + "&dailyTotalMinutes=" + sensordata.dailyTotalMinutes;
+
+  Serial.println(keyValue);
+
+  String urlFinal = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?" + keyValue;
+  Serial.print("POST data to spreadsheet:");
+  urlFinal.replace(" ", "%20");
+  Serial.println(urlFinal);
+  HTTPClient http;
+  http.begin(urlFinal.c_str());
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");  //Specify content-type header
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  int httpCode = http.GET();
+  Serial.print("\nHTTP Status Code: ");
+  Serial.println(httpCode);
+
+  //getting response from google sheet
+  String payload;
+  if (httpCode > 0) {
+    payload = http.getString();
+    Serial.println("Payload: " + payload);
+  }
+  http.end();
+}
