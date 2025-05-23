@@ -70,7 +70,7 @@ char replyPacket[] = "Hi there! Got the message :-)";
 const char *udpAddress1 = "pool.ntp.org";
 const char *udpAddress2 = "time.nist.gov";
 
-String GOOGLE_SCRIPT_ID = "AKfycbx1jEvMGky6CRXfQkIJOd8kPWIc4F33dF2gDZaDmlplIiS5byQy86C1QNEBHyMQxHaN";  //Deployment ID: Double
+String GOOGLE_SCRIPT_ID = "removed";  //Deployment ID: Double
 
 //master MAC address
 uint8_t masterAddress[] = { 0x3C, 0xE9, 0x0E, 0x84, 0xEE, 0x80 };  // Replace with receiver's MAC address
