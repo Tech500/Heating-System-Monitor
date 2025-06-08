@@ -1,6 +1,4 @@
-/*
-
-	    Heating System Monitor  << ESP Now --BME280 Slave>> May 6, 2025 @ 04:06 EDT
+    Heating System Monitor  << ESP Now --BME280 Slave>> May 6, 2025 @ 04:06 EDT
 	
  	              ESP-Now code for Outside Temperature; BME280 sensor. 
 
@@ -17,11 +15,10 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <WiFiUdp.h>
-//#include <NTPClient.h>
 
 // WiFi credentials
-const char *ssid = "R2D2";
-const char *password = "sissy4357";
+const char *ssid = "Removed";
+const char *password = "Removed";
 
 volatile bool alertFlag = false;
 
@@ -166,9 +163,6 @@ void setup() {
   Serial.println(WiFi.macAddress());
   Serial.print("STA CHANNEL ");
   Serial.println(WiFi.channel());
-
-  // Initialize NTP client
-  //timeClient.begin();
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
