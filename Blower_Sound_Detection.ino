@@ -5,8 +5,8 @@
 #include "Filters.h"
 
 // WiFi credentials
-const char* ssid = "R2D2";
-const char* password = "sissy4357";
+const char* ssid = "Removed";
+const char* password = "Removed";
 
 // Master MAC address
 uint8_t masterAddress[] = { 0x3C, 0xE9, 0x0E, 0x84, 0xEE, 0x80 };
